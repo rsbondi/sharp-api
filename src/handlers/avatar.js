@@ -10,7 +10,7 @@ function avatar(req, res) {
     return
   }
   const user_id = res.locals.userId
-  db.setAvatar(user_id, req.file.filename).then(data => {
+  db.setUserImage(user_id, req.file.filename, 'avatar_image').then(data => {
     res.send(JSON.stringify({success: true, id: data.id,file: req.file.filename}));
   }).catch(err => {
     res.status(500)
