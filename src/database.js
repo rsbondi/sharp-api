@@ -651,8 +651,8 @@ class DataBase {
         CASE
          WHEN r.request_type=0 THEN 'accountability' 
          WHEN r.request_type=1 THEN 'mentor'
-        END content
-        FROM notification n
+         END || ',' || r.request_status content
+         FROM notification n
         JOIN user u ON n.user_id=u.id
         JOIN request r ON n.source_id=r.id
         WHERE n.notification_type='request'
