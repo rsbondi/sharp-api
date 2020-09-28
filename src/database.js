@@ -346,6 +346,8 @@ class DataBase {
       m.created_at,
       s.username sender,
       r.username reciever,
+      s.avatar_image sender_image,
+      r.avatar_image reciever_image,
       s.id sender_id,
       r.id reciever_id,
       s.fullname sender_name,
@@ -370,9 +372,11 @@ class DataBase {
               const them = row.mine ? row.reciever : row.sender
               const theirid = row.mine ? row.reciever_id : row.sender_id
               const theirname = row.mine ? row.reciever_name : row.sender_name
+              const theirimage = row.mine ? row.reciever_image : row.sender_image
               result[them] = result[them] || {
                 name: theirname,
                 id: theirid,
+                avatar_image: theirimage,
                 messages: []
               }
               const {message_id, created_at, content, mine} = row
