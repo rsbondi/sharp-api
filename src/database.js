@@ -180,6 +180,10 @@ class DataBase {
         let insert
         if (request_status === 1) {
           insert = await this.runAsync(insert_query, ...query_values[1])
+          await this.runAsync(this.notificationQuery(request.request_type === REQUEST.TYPE.ACCOUNTABILITY ? 
+            'accountability' : 'mentor'),
+          insert.lastID, request.requestee_id, request.requester_id)
+
         }
         await this.runAsync('COMMIT;')
 
@@ -581,18 +585,21 @@ class DataBase {
       let ifollowClause = '', ifollowStatement = '', requestClause = '', requestStatement = ''
       if (requester_id) {
         params.push(requester_id, requester_id)
+        params.unshift(requester_id, requester_id)
         ifollowClause = 'LEFT JOIN  (SELECT * FROM follow) f3 ON f3.followee_id=u.id AND f3.follower_id=?'
         ifollowStatement = 'CASE WHEN f3.id>0 THEN 1 ELSE 0 END ifollow,'
         requestStatement = `,
         COALESCE(GROUP_CONCAT(request_type), '') requests,
         COALESCE(GROUP_CONCAT(request_status), '') request_status`
-        requestClause = `LEFT JOIN request r ON r.requester_id=u.id OR r.requestee_id=u.id`
+        requestClause = `LEFT JOIN request r ON r.requester_id=u.id AND r.requestee_id=?
+                         OR r.requestee_id=u.id AND r.requester_id=?`
+
       }
       const whereClause = user_id ? ' WHERE u.id=?' : requester_id ? ' WHERE u.id!=?' : ''
       const dbmethod = user_id ? 'get' : 'all'
       const sql = `
       SELECT u.id, u.username, u.fullname, u.avatar_image, u.cover_image, 
-      COALESCE(GROUP_CONCAT(o.offer_type), '') offerings, 
+      COALESCE(offers, '') offerings, 
       COALESCE(l.likes_received, 0) likes, 
       COALESCE(pc.posts, 0) posts,
       ${ifollowStatement}
@@ -612,7 +619,7 @@ class DataBase {
           FROM post p
           GROUP BY p.user_id
       ) pc ON pc.user_id=u.id
-      LEFT JOIN offering o ON u.id=o.user_id
+      LEFT JOIN (SELECT GROUP_CONCAT(offer_type) offers, user_id FROM offering GROUP BY user_id) o ON u.id=o.user_id
       LEFT JOIN (SELECT COUNT(id) followers, followee_id FROM follow GROUP BY followee_id) f ON f.followee_id=u.id
       LEFT JOIN  (SELECT COUNT(id) following, follower_id FROM follow GROUP BY follower_id) f2 ON f2.follower_id=u.id
       ${ifollowClause}
@@ -663,6 +670,23 @@ class DataBase {
         JOIN user u ON n.user_id=u.id
         JOIN message m ON n.source_id=m.id
         WHERE n.notification_type='message'
+
+        UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
+        u.username, u.fullname, u.avatar_image,
+        'accountability' content
+        FROM notification n
+        JOIN user u ON n.user_id=u.id
+        JOIN accountability a ON n.source_id=a.id
+        WHERE n.notification_type='accountability'
+
+        UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
+        u.username, u.fullname, u.avatar_image,
+        'mentor' content
+        FROM notification n
+        JOIN user u ON n.user_id=u.id
+        JOIN mentor m ON n.source_id=m.id
+        WHERE n.notification_type='mentor'
+
         ) x
         
         WHERE recipient_id=?
