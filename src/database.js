@@ -31,15 +31,21 @@ class DataBase {
   }
 
   follow(follower_id, followee_id) {
-    return new Promise((resolve, reject) => {
-      const sql = this.db.prepare("INSERT INTO follow (follower_id, followee_id, created_at) VALUES(?, ?, CURRENT_TIMESTAMP)")
-      sql.run(follower_id, followee_id, (err) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve({ id: sql.lastID })
-        }
-      }).finalize()
+    return new Promise(async (resolve, reject) => {
+      try {
+        await this.runAsync(`BEGIN TRANSACTION;`)
+        const sql = "INSERT INTO follow (follower_id, followee_id, created_at) VALUES(?, ?, CURRENT_TIMESTAMP)"
+        const insert = await this.runAsync(sql, follower_id, followee_id)
+        await this.runAsync(this.notificationQuery('follow'), insert.lastID, follower_id, followee_id)
+        await this.runAsync('COMMIT;')      
+        resolve({ id: insert.lastID })
+      } catch (e) {
+        await this.runAsync('ROLLBACK')
+        reject({
+          code: DB_ERRORS.UNKNOWN,
+          err: e.message
+        })
+      }
     })
   }
 
@@ -676,7 +682,6 @@ class DataBase {
         'accountability' content
         FROM notification n
         JOIN user u ON n.user_id=u.id
-        JOIN accountability a ON n.source_id=a.id
         WHERE n.notification_type='accountability'
 
         UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
@@ -684,8 +689,14 @@ class DataBase {
         'mentor' content
         FROM notification n
         JOIN user u ON n.user_id=u.id
-        JOIN mentor m ON n.source_id=m.id
         WHERE n.notification_type='mentor'
+
+        UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
+        u.username, u.fullname, u.avatar_image,
+        'follow' content
+        FROM notification n
+        JOIN user u ON n.user_id=u.id
+        WHERE n.notification_type='follow'
 
         ) x
         
