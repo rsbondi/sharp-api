@@ -475,7 +475,7 @@ class DataBase {
       let whereClause, params
       if (group_id) {
         whereClause = 'WHERE p.group_id=?'
-        params = [group_id]
+        params = [group_id, user_id]
       } else {
         whereClause = `WHERE (
             p.user_id=?
@@ -485,7 +485,7 @@ class DataBase {
             )
           )
         `
-        params = [user_id, user_id]
+        params = [user_id, user_id, user_id]
       }
       if (last) {
         whereClause += ` AND (p.created_at > ? OR pc.created_at > ?)`
@@ -506,13 +506,15 @@ class DataBase {
       cmt.avatar_image commenter_image,
       COUNT(pl.id) likes,
       pc.id comment_id,
-      COuNT(cl.id) comment_likes
+      COUNT(cl.id) comment_likes,
+      COALESCE(ilike, 0) ilike
       FROM post p
       JOIN user u ON p.user_id = u.id
       LEFT JOIN likes pl ON p.id=pl.item_id AND pl.item_type=0
       LEFT JOIN comment pc ON pc.post_id=p.id
       LEFT JOIN user cmt on pc.user_id=cmt.id
       LEFT JOIN likes cl ON pc.id=cl.item_id AND cl.item_type=1
+      LEFT JOIN (SELECT 1 'ilike', item_id FROM likes WHERE user_id=?) il ON p.id=il.item_id
       ${whereClause}
       GROUP BY p.id, pc.id
       ORDER BY p.created_at DESC, pc.id DESC
@@ -528,9 +530,9 @@ class DataBase {
         if (rows) {
           resolve({
             posts: Array.from(rows.reduce((result, row) => {
-              const { id, content, username, fullname, created_at, likes, comment_likes, avatar_image } = row
+              const { id, content, username, fullname, created_at, likes, comment_likes, avatar_image, ilike } = row
               result.set(row.id, result.get(row.id) || {
-                id, content, username, fullname, created_at, likes, avatar_image,
+                id, content, username, fullname, created_at, likes, avatar_image, ilike,
                 comments: []
               })
               if (row.comment_id)
@@ -634,7 +636,6 @@ class DataBase {
       GROUP BY u.id
       ;
       `
-      console.log(sql)
       this.db[dbmethod](sql, params, (err, row) => {
         if (err) {
           reject({
