@@ -50,16 +50,30 @@ class DataBase {
   }
 
   like(user_id, item_id, item_type) {
-    // TODO: these need to be unique
-    return new Promise((resolve, reject) => {
-      const sql = this.db.prepare("INSERT INTO likes (user_id, item_id, item_type, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)")
-      sql.run(user_id, item_id, item_type, (err) => {
-        if (err) {
-          reject(err)
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rows = await this.queryAsync(
+          `SELECT id FROM likes WHERE user_id=? AND item_id=? AND item_type=?`,
+          user_id, item_id, item_type)
+        if (rows.length) {
+          await this.runAsync(`BEGIN TRANSACTION;`)
+          await this.runAsync(`DELETE FROM likes WHERE id=?`, rows[0].id)
+          await this.runAsync('COMMIT;')      
+          resolve({ id: rows[0].id , action: 'unlike'})
         } else {
-          resolve({ id: sql.lastID })
+          await this.runAsync(`BEGIN TRANSACTION;`)
+          const sql = "INSERT INTO likes (user_id, item_id, item_type, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)"
+          const insert = await this.runAsync(sql, user_id, item_id, item_type)
+          await this.runAsync('COMMIT;')      
+          resolve({ id: insert.lastID, action: 'like' })
         }
-      }).finalize()
+      } catch(e) {
+        await this.runAsync('ROLLBACK')
+        reject({
+          code: DB_ERRORS.UNKNOWN,
+          err: e.message
+        })
+      }
     })
   }
 
@@ -147,6 +161,14 @@ class DataBase {
     })
   }
 
+  queryAsync(statement, ...params) {
+    return new Promise(async (resolve, reject) => {
+      this.db.all(statement, params, function(err, rows) {
+        if (err) reject(err)
+        else resolve(rows)
+      })
+    })
+  }
   async updateRequest(user_id, request_id, request_status) {
     return new Promise(async (resolve, reject) => {
       try {

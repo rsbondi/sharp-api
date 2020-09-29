@@ -6,7 +6,8 @@ function like(req, res) {
   db.like(user_id, item_id, item_type).then(data => {
     res.send(JSON.stringify({
       success: true,
-      id: data.id
+      id: data.id,
+      action: data.action
     }))
   }).catch(err => {
     res.status(500)
@@ -14,7 +15,7 @@ function like(req, res) {
       success: false,
       err: err.message
     }))
-    return console.error(err.message);
+    return console.error(err);
 
   })
 }
