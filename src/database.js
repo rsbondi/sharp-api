@@ -248,15 +248,28 @@ class DataBase {
   }
 
   comment(user_id, post_id, content) {
-    return new Promise((resolve, reject) => {
-      const sql = this.db.prepare("INSERT INTO comment (user_id, post_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)")
-      sql.run(user_id, post_id, content, (err) => {
-        if (err) {
-          reject(err)
+    return new Promise(async (resolve, reject) => {
+      try {
+        const sql = "INSERT INTO comment (user_id, post_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)"
+        await this.runAsync(`BEGIN TRANSACTION;`)
+        const insert = await this.runAsync(sql, user_id, post_id, content)
+        const post = await this.queryAsync('SELECT user_id FROM post WHERE id=?', post_id)
+        if (post.length) {
+          await this.runAsync(this.notificationQuery('comment'), insert.lastID, user_id, post[0].user_id)
         } else {
-          resolve({ id: sql.lastID })
+          await this.runAsync('ROLLBACK')
+          reject({code: DB_ERRORS.SERVER_ERROR, err: 'unable to create notification'})
+          return;
         }
-      }).finalize()
+        await this.runAsync('COMMIT;')      
+        resolve({ id: insert.lastID })
+      } catch(e) {
+        await this.runAsync('ROLLBACK')
+        reject({
+          code: DB_ERRORS.UNKNOWN,
+          err: e.message
+        })
+      }
     })
   }
 
@@ -746,6 +759,13 @@ class DataBase {
         JOIN user u ON n.user_id=u.id
         JOIN post p ON n.source_id=p.id
         WHERE n.notification_type='like'
+
+        UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
+        u.username, u.fullname, u.avatar_image, c.content
+        FROM notification n
+        JOIN user u ON n.user_id=u.id
+        JOIN comment c ON n.source_id=c.id
+        WHERE n.notification_type='comment'
 
         ) x
         
