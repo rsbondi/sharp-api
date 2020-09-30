@@ -6,7 +6,8 @@ function follow(req, res) {
   db.follow(follower_id, followee_id).then(data => {
     res.send(JSON.stringify({
       success: true,
-      id: data.id
+      id: data.id,
+      action: data.action
     }))
   }).catch(err => {
     res.status(500)

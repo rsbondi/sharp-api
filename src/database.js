@@ -33,12 +33,22 @@ class DataBase {
   follow(follower_id, followee_id) {
     return new Promise(async (resolve, reject) => {
       try {
-        await this.runAsync(`BEGIN TRANSACTION;`)
-        const sql = "INSERT INTO follow (follower_id, followee_id, created_at) VALUES(?, ?, CURRENT_TIMESTAMP)"
-        const insert = await this.runAsync(sql, follower_id, followee_id)
-        await this.runAsync(this.notificationQuery('follow'), insert.lastID, follower_id, followee_id)
-        await this.runAsync('COMMIT;')      
-        resolve({ id: insert.lastID })
+        const rows = await this.queryAsync(
+          `SELECT id FROM follow WHERE follower_id=? AND followee_id=?`,
+          follower_id, followee_id)
+        if (rows.length) {
+          await this.runAsync(`BEGIN TRANSACTION;`)
+          await this.runAsync(`DELETE FROM follow WHERE id=?`, rows[0].id)
+          await this.runAsync('COMMIT;')      
+          resolve({ id: rows[0].id , action: 'unfollow'})
+        } else {
+          await this.runAsync(`BEGIN TRANSACTION;`)
+          const sql = "INSERT INTO follow (follower_id, followee_id, created_at) VALUES(?, ?, CURRENT_TIMESTAMP)"
+          const insert = await this.runAsync(sql, follower_id, followee_id)
+          await this.runAsync(this.notificationQuery('follow'), insert.lastID, follower_id, followee_id)
+          await this.runAsync('COMMIT;')      
+          resolve({ id: insert.lastID, action: 'follow' })
+        }
       } catch (e) {
         await this.runAsync('ROLLBACK')
         reject({
