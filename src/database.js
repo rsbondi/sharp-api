@@ -64,6 +64,14 @@ class DataBase {
           await this.runAsync(`BEGIN TRANSACTION;`)
           const sql = "INSERT INTO likes (user_id, item_id, item_type, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)"
           const insert = await this.runAsync(sql, user_id, item_id, item_type)
+          const post = await this.queryAsync('SELECT user_id FROM post WHERE id=?', item_id)
+          if (post.length) {
+            await this.runAsync(this.notificationQuery('like'), insert.lastID, user_id, post[0].user_id)
+          } else {
+            await this.runAsync('ROLLBACK')
+            reject({code: DB_ERRORS.SERVER_ERROR, err: 'unable to create notification'})
+            return;
+          }
           await this.runAsync('COMMIT;')      
           resolve({ id: insert.lastID, action: 'like' })
         }
@@ -720,6 +728,14 @@ class DataBase {
         FROM notification n
         JOIN user u ON n.user_id=u.id
         WHERE n.notification_type='follow'
+
+        UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
+        u.username, u.fullname, u.avatar_image,
+        p.content
+        FROM notification n
+        JOIN user u ON n.user_id=u.id
+        JOIN post p ON n.source_id=p.id
+        WHERE n.notification_type='like'
 
         ) x
         
