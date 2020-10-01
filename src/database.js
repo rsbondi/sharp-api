@@ -792,34 +792,34 @@ class DataBase {
     return new Promise((resolve, reject) => {
       this.db.all(`
       SELECT * FROM (
-        SELECT m.mentor_id contact, m.protoge_id me, 'mentor' relation,
+        SELECT m.id, m.mentor_id contact, m.protoge_id me, 'mentor' relation,
         mu.fullname, mu.avatar_image 
         FROM mentor m
         JOIN user mu ON mu.id=m.mentor_id
     
         UNION
-        SELECT p.protoge_id contact, p.mentor_id me, 'protoge' relation,
+        SELECT p.id, p.protoge_id contact, p.mentor_id me, 'protoge' relation,
         pu.fullname, pu.avatar_image
         FROM mentor p
         JOIN user pu ON pu.id=p.mentor_id
     
         UNION
-        SELECT a.user1 contact, a.user2 me, 'accountability' relation,
+        SELECT a.id, a.user1 contact, a.user2 me, 'accountability' relation,
         au.fullname, au.avatar_image
         FROM accountability a
         JOIN user au ON au.id=a.user1
     
         UNION
-        SELECT a2.user2 contact, a2.user1 me, 'accountability' relation,
+        SELECT a2.id, a2.user2 contact, a2.user1 me, 'accountability' relation,
         au2.fullname, au2.avatar_image
         FROM accountability a2
         JOIN user au2 ON au2.id=a2.user2
     
         UNION
-        SELECT r.requester_id contact, r.requestee_id me, r.relation,
+        SELECT r.id, r.requester_id contact, r.requestee_id me, r.relation,
         ru.fullname, ru.avatar_image
         FROM (
-            SELECT 
+            SELECT id,
                 CASE WHEN request_type=0 THEN 'accountability request' 
                 ELSE 'mentor request' END relation
                 , requester_id, requestee_id, request_status
@@ -840,6 +840,7 @@ class DataBase {
         }
         resolve({
           actions: rows.map(a => ({
+            id: a.id,
             contact: a.contact, 
             relation: a.relation,
             fullname: a.fullname,
