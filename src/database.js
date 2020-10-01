@@ -816,12 +816,17 @@ class DataBase {
         JOIN user au2 ON au2.id=a2.user2
     
         UNION
-        SELECT r.requester_id contact, r.requestee_id me, 'request' relation,
+        SELECT r.requester_id contact, r.requestee_id me, r.relation,
         ru.fullname, ru.avatar_image
-        FROM request r
+        FROM (
+            SELECT 
+                CASE WHEN request_type=0 THEN 'accountability request' 
+                ELSE 'mentor request' END relation
+                , requester_id, requestee_id, request_status
+            FROM request) r
         JOIN user ru ON ru.id=r.requester_id
         WHERE r.request_status=0
-    
+        
     )
     
     WHERE me=?      
