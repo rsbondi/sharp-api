@@ -851,6 +851,23 @@ class DataBase {
       )
     })
   }
+
+  searchUsers(str, user_id) {
+    return new Promise((resolve, reject) => {
+      this.db.all(`
+      SELECT id, username, fullname, avatar_image FROM user WHERE fullname COLLATE NOCASE LIKE ? AND id!=?;
+      `, [`%${str}%`, user_id], (err, rows) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        resolve(rows)
+      })
+    })
+  }
 }
 
 module.exports = {
