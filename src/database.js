@@ -200,7 +200,7 @@ class DataBase {
             break;
           case REQUEST.TYPE.MENTOR:
             user1 = 'mentor_id'
-            user2 = 'protoge_id'
+            user2 = 'protege_id'
             table = 'mentor'
             break;
         }
@@ -793,16 +793,16 @@ class DataBase {
     return new Promise((resolve, reject) => {
       this.db.all(`
       SELECT * FROM (
-        SELECT m.id, m.mentor_id contact, m.protoge_id me, 'mentor' relation,
+        SELECT m.id, m.mentor_id contact, m.protege_id me, 'mentor' relation,
         mu.fullname, mu.avatar_image, mu.username 
         FROM mentor m
         JOIN user mu ON mu.id=m.mentor_id
     
         UNION
-        SELECT p.id, p.protoge_id contact, p.mentor_id me, 'protoge' relation,
+        SELECT p.id, p.protege_id contact, p.mentor_id me, 'protege' relation,
         pu.fullname, pu.avatar_image, pu.username
         FROM mentor p
-        JOIN user pu ON pu.id=p.protoge_id
+        JOIN user pu ON pu.id=p.protege_id
     
         UNION
         SELECT a.id, a.user1 contact, a.user2 me, 'accountability' relation,

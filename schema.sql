@@ -13,7 +13,7 @@ CREATE TABLE group_users (
 CREATE TABLE mentor (
   id INTEGER PRIMARY KEY,
   mentor_id INTEGER,
-  protoge_id INTEGER,
+  protege_id INTEGER,
   created_at DATETIME
 );
 CREATE TABLE accountability (
@@ -102,7 +102,7 @@ CREATE TABLE likes (
 CREATE INDEX idx_group_users_group_id ON group_users (group_id);
 CREATE INDEX idx_group_users_user_id ON group_users (user_id);
 CREATE INDEX idx_mentor_mentor_id ON mentor (mentor_id);
-CREATE INDEX idx_mentor_protoge_id ON mentor (protoge_id);
+CREATE INDEX idx_mentor_protege_id ON mentor (protege_id);
 CREATE INDEX idx_accountability_user1 ON accountability (user1);
 CREATE INDEX idx_accountability_user2 ON accountability (user2);
 CREATE INDEX idx_message_sender_id ON message (sender_id);
@@ -118,7 +118,7 @@ CREATE INDEX idx_users_group_owner_id ON user_group (owner);
 CREATE UNIQUE INDEX seek_user_id on seeking(user_id, seek_type);
 CREATE UNIQUE INDEX offer_user_id on offering(user_id, offer_type);
 CREATE UNIQUE INDEX request_idx_unique on request(requester_id, requestee_id, request_type);
-CREATE UNIQUE INDEX mentor_protoge_id ON mentor(mentor_id, protoge_id);
+CREATE UNIQUE INDEX mentor_protege_id ON mentor(mentor_id, protege_id);
 CREATE UNIQUE INDEX accountability_users ON accountability(user1, user2);
 CREATE INDEX idx_notification_recipient ON notification (recipient_id);
 COMMIT;
