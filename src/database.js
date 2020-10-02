@@ -870,6 +870,23 @@ class DataBase {
       })
     })
   }
+
+  getUser(user_id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(`
+      SELECT id, username, fullname, avatar_image FROM user WHERE id=?;
+      `, [user_id], (err, row) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        resolve(row)
+      })
+    })
+  }
 }
 
 module.exports = {
