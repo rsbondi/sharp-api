@@ -794,31 +794,31 @@ class DataBase {
       this.db.all(`
       SELECT * FROM (
         SELECT m.id, m.mentor_id contact, m.protoge_id me, 'mentor' relation,
-        mu.fullname, mu.avatar_image 
+        mu.fullname, mu.avatar_image, mu.username 
         FROM mentor m
         JOIN user mu ON mu.id=m.mentor_id
     
         UNION
         SELECT p.id, p.protoge_id contact, p.mentor_id me, 'protoge' relation,
-        pu.fullname, pu.avatar_image
+        pu.fullname, pu.avatar_image, pu.username
         FROM mentor p
-        JOIN user pu ON pu.id=p.mentor_id
+        JOIN user pu ON pu.id=p.protoge_id
     
         UNION
         SELECT a.id, a.user1 contact, a.user2 me, 'accountability' relation,
-        au.fullname, au.avatar_image
+        au.fullname, au.avatar_image, au.username
         FROM accountability a
         JOIN user au ON au.id=a.user1
     
         UNION
         SELECT a2.id, a2.user2 contact, a2.user1 me, 'accountability' relation,
-        au2.fullname, au2.avatar_image
+        au2.fullname, au2.avatar_image, au2.username
         FROM accountability a2
         JOIN user au2 ON au2.id=a2.user2
     
         UNION
         SELECT r.id, r.requester_id contact, r.requestee_id me, r.relation,
-        ru.fullname, ru.avatar_image
+        ru.fullname, ru.avatar_image, ru.username
         FROM (
             SELECT id,
                 CASE WHEN request_type=0 THEN 'accountability request' 
@@ -845,6 +845,7 @@ class DataBase {
             contact: a.contact, 
             relation: a.relation,
             fullname: a.fullname,
+            username: a.username,
             avatar_image: a.avatar_image
           }))
         })
