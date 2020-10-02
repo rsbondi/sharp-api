@@ -6,7 +6,7 @@ function message(req, res) {
   db.message(sender_id, recipient_id, content).then(data => {
     res.send(JSON.stringify({
       success: true,
-      id: data.id
+      message: data
     }))
   }).catch(err => {
     res.status(500)

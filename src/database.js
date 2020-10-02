@@ -280,8 +280,9 @@ class DataBase {
         const sql = "INSERT INTO message (sender_id, recipient_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)"
         const insert = await this.runAsync(sql, sender_id, recipient_id, content)
         await this.runAsync(this.notificationQuery('message'), insert.lastID, sender_id, recipient_id)
-        await this.runAsync('COMMIT;')      
-        resolve({ id: insert.lastID })
+        await this.runAsync('COMMIT;')    
+        const result = await this.queryAsync('SELECT * FROM message WHERE id=?', insert.lastID)
+        resolve(result[0])
       } catch(e) {
         await this.runAsync('ROLLBACK')
         reject({
