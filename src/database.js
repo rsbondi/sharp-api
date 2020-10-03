@@ -758,7 +758,8 @@ class DataBase {
         p.content
         FROM notification n
         JOIN user u ON n.user_id=u.id
-        JOIN post p ON n.source_id=p.id
+        JOIN likes l on n.source_id=l.id
+        JOIN post p ON l.item_id=p.id
         WHERE n.notification_type='like'
 
         UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
@@ -876,6 +877,40 @@ class DataBase {
       this.db.get(`
       SELECT id, username, fullname, avatar_image FROM user WHERE id=?;
       `, [user_id], (err, row) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        resolve(row)
+      })
+    })
+  }
+
+  getComment(comment_id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(`
+      SELECT * FROM comment WHERE id=?;
+      `, [comment_id], (err, row) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        resolve(row)
+      })
+    })
+  }
+
+  getLike(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(`
+      SELECT * FROM likes WHERE id=?;
+      `, [id], (err, row) => {
         if (err) {
           reject({
             code: DB_ERRORS.SERVER_ERROR,
