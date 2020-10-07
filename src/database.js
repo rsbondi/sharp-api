@@ -925,6 +925,37 @@ class DataBase {
       })
     })
   }
+
+  getFollows(user_id) {
+    return new Promise((resolve, reject) => {
+      const sql = `SELECT  
+      u.id user_id, u.username, u.fullname, u.avatar_image, 1 follower
+      FROM follow f
+      JOIN user u ON u.id=f.follower_id
+      WHERE f.followee_id=?
+      
+      UNION SELECT  
+        u.id user_id, u.username, u.fullname, u.avatar_image, 0 follower
+      FROM follow f
+      JOIN user u ON u.id=f.followee_id
+      WHERE f.follower_id=?
+      ;`
+      this.db.all(sql, [user_id, user_id], (err, rows) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        resolve(rows.reduce((result, row) => {
+          (row.follower ? result.followers : result.following).push(row)
+          return result
+        }, {followers: [], following: []}))
+      })
+      
+    })
+  }
 }
 
 module.exports = {
