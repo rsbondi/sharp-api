@@ -552,10 +552,12 @@ class DataBase {
       u.username,
       u.fullname,
       u.avatar_image,
+      u.id user_id,
       pc.content comment,
       pc.id comment_id,
       pc.created_at comment_time,
       cmt.username commenter,
+      cmt.id commenter_id,
       cmt.fullname commenter_name,
       cmt.avatar_image commenter_image,
       COUNT(pl.id) likes,
@@ -584,15 +586,16 @@ class DataBase {
         if (rows) {
           resolve({
             posts: Array.from(rows.reduce((result, row) => {
-              const { id, content, username, fullname, created_at, likes, comment_likes, avatar_image, ilike } = row
+              const { id, content, username, fullname, created_at, likes, comment_likes, avatar_image, ilike, user_id } = row
               result.set(row.id, result.get(row.id) || {
-                id, content, username, fullname, created_at, likes, avatar_image, ilike,
+                id, content, username, fullname, created_at, likes, avatar_image, ilike, user_id,
                 comments: []
               })
               if (row.comment_id)
                 result.get(row.id).comments.push({
                   id: row.comment_id,
                   username: row.commenter,
+                  user_id: row.commenter_id,
                   fullname: row.commenter_name,
                   created_at: row.comment_time,
                   likes: comment_likes,
