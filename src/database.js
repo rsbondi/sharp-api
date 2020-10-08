@@ -648,7 +648,7 @@ class DataBase {
   getUserInfo(options) {
     return new Promise((resolve, reject) => {
       options = options || {}
-      const { user_id, requester_id, in_ids } = options
+      const { user_id, requester_id, in_ids, filter } = options
       const params = []
       if (user_id) params.push(user_id)
       let ifollowClause = '', ifollowStatement = '', requestClause = '', requestStatement = ''
@@ -664,13 +664,21 @@ class DataBase {
                          OR r.requestee_id=u.id AND r.requester_id=?`
 
       }
-      const whereClause = user_id ? ' WHERE u.id=?' : requester_id ? ' WHERE u.id!=?' : ''
+      let whereClause = user_id ? ' WHERE u.id=?' : requester_id ? ' WHERE u.id!=?' : ''
       let inClause = ''
       if (in_ids) {
         var placeHolders = new Array(in_ids.length).fill('?').join(',');
         inClause = ` AND u.id IN (${placeHolders})`
 
         params.push(...in_ids)
+      }
+      if (filter) {
+        if (filter.accountability) {
+          whereClause += ` AND ${filter.mentor ? '(' : ''}INSTR(offers, '0')>0`
+        } 
+        if (filter.mentor) {
+          whereClause += ` ${filter.accountability ? 'OR' : 'AND'} INSTR(offers, '1')>0${filter.accountability ? ')' : ''}`
+        } 
       }
       const dbmethod = user_id ? 'get' : 'all'
       const sql = `

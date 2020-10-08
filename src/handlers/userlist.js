@@ -1,8 +1,8 @@
 const { db } = require('../database') 
 
 function userlist(req, res) {
-  const { user_id } = req.body
-  db.getUserInfo({requester_id: res.locals.userId}).then(data => {
+  const { filter } = req.body
+  db.getUserInfo({requester_id: res.locals.userId, filter}).then(data => {
     res.send(JSON.stringify({
       success: true,
       info: data
