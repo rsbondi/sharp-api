@@ -1,9 +1,12 @@
 const { db } = require('../database') 
 
-function feed(req, res) {
-  const user_id = res.locals.userId
-  const { group_id, last } = req.body
-  db.getFeed({ user_id, last, group_id }).then(data => {
+function userposts(req, res) {
+  let user_id
+  user_id = req.body.user_id
+  if (!user_id) {
+    user_id = res.locals.userId
+  } 
+  db.getFeed({ user_id, user_posts: true }).then(data => {
     res.send(JSON.stringify({
       success: true,
       id: data.id,
@@ -20,4 +23,4 @@ function feed(req, res) {
   })
 }
 
-module.exports = feed
+module.exports = userposts

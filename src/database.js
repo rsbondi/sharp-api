@@ -524,12 +524,16 @@ class DataBase {
 
   }
 
-  getFeed(user_id, last, group_id) {
+  getFeed(options) {
+    const { user_id, last, group_id, user_posts } = options
     return new Promise((resolve, reject) => {
       let whereClause, params
       if (group_id) {
         whereClause = 'WHERE p.group_id=?'
         params = [group_id, user_id]
+      } else if (user_posts) {
+        whereClause = `WHERE p.user_id=?`
+        params = [user_id, user_id]
       } else {
         whereClause = `WHERE (
             p.user_id=?
