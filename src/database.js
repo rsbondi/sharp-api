@@ -644,7 +644,7 @@ class DataBase {
   getUserInfo(options) {
     return new Promise((resolve, reject) => {
       options = options || {}
-      const { user_id, requester_id } = options
+      const { user_id, requester_id, in_ids } = options
       const params = []
       if (user_id) params.push(user_id)
       let ifollowClause = '', ifollowStatement = '', requestClause = '', requestStatement = ''
@@ -661,6 +661,13 @@ class DataBase {
 
       }
       const whereClause = user_id ? ' WHERE u.id=?' : requester_id ? ' WHERE u.id!=?' : ''
+      let inClause = ''
+      if (in_ids) {
+        var placeHolders = new Array(in_ids.length).fill('?').join(',');
+        inClause = ` AND u.id IN (${placeHolders})`
+
+        params.push(...in_ids)
+      }
       const dbmethod = user_id ? 'get' : 'all'
       const sql = `
       SELECT u.id, u.username, u.fullname, u.avatar_image, u.cover_image, 
@@ -690,6 +697,7 @@ class DataBase {
       ${ifollowClause}
       ${requestClause}
       ${whereClause}
+      ${inClause}
       GROUP BY u.id
       ;
       `
@@ -927,33 +935,40 @@ class DataBase {
   }
 
   getFollows(user_id) {
-    return new Promise((resolve, reject) => {
-      const sql = `SELECT  
-      u.id user_id, u.username, u.fullname, u.avatar_image, 1 follower
-      FROM follow f
-      JOIN user u ON u.id=f.follower_id
-      WHERE f.followee_id=?
-      
-      UNION SELECT  
-        u.id user_id, u.username, u.fullname, u.avatar_image, 0 follower
-      FROM follow f
-      JOIN user u ON u.id=f.followee_id
-      WHERE f.follower_id=?
-      ;`
-      this.db.all(sql, [user_id, user_id], (err, rows) => {
-        if (err) {
-          reject({
-            code: DB_ERRORS.SERVER_ERROR,
-            err: err.message
-          })
-          return console.error(err.message);
-        }
-        resolve(rows.reduce((result, row) => {
-          (row.follower ? result.followers : result.following).push(row)
+    return new Promise(async (resolve, reject) => {
+      try {
+        const followerids = await this.queryAsync(
+          `SELECT u.id FROM follow f 
+          JOIN user u ON  u.id=f.follower_id
+          WHERE f.followee_id=?;`, user_id)
+        const followersids = followerids.reduce((result, row) => {
+          result.push(row.id)
           return result
-        }, {followers: [], following: []}))
-      })
-      
+        }, [])
+
+        const followers = await this.getUserInfo({requester_id: user_id, in_ids: followersids})
+
+        const followingids = await this.queryAsync(
+          `SELECT  
+          u.id
+          FROM follow f
+          JOIN user u ON u.id=f.followee_id
+          WHERE f.follower_id=?;`, user_id)
+        const followids = followingids.reduce((result, row) => {
+          result.push(row.id)
+          return result
+        }, [])
+
+        const following = await this.getUserInfo({requester_id: user_id, in_ids: followids})
+        
+        resolve({followers, following})
+
+      } catch (e) {
+        reject({
+          code: DB_ERRORS.UNKNOWN,
+          err: e.message
+        })
+      }
     })
   }
 }
