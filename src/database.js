@@ -983,6 +983,35 @@ class DataBase {
       }
     })
   }
+
+  getNewNotifications(user_id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(`
+      select COUNT(id) unseen FROM notification where seen=0 and recipient_id=?;
+      `, [user_id], (err, row) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        resolve(row)
+      })
+    })
+
+  }
+
+  seeAll(user_id) {
+    return new Promise(async (resolve, reject) => {
+      const statement = `UPDATE notification SET seen=1 WHERE recipient_id=?`
+      this.db.run(statement, [user_id], function(err) {
+        if (err) reject(err)
+        else resolve()
+      })
+    })
+
+  }
 }
 
 module.exports = {
