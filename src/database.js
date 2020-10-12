@@ -193,7 +193,8 @@ class DataBase {
       })
     })
   }
-  async updateRequest(user_id, request_id, request_status) {
+  
+  updateRequest(user_id, request_id, request_status) {
     return new Promise(async (resolve, reject) => {
       try {
         const request = await this.getRequest(request_id)
@@ -1071,6 +1072,36 @@ class DataBase {
           code: DB_ERRORS.UNKNOWN,
           err: e.message
         })
+      }
+    })
+  }
+
+  addProgram(user_id, name, description, level, phases) {
+    phases = phases || []
+    return new Promise(async (resolve, reject) => {
+      try {
+        await this.runAsync(`BEGIN TRANSACTION;`)
+        const insert = await this.runAsync(
+          `INSERT INTO program (user_id, name, description, level, created_at) 
+          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`, user_id, name, description, level)
+        for (let p=0; p < phases.length; p++) {
+          const phase = phases[p]
+          await this.runAsync(`
+            INSERT INTo program_phase (program_id, name, description, level) 
+            VALUES (?, ?, ?, ?)`, insert.lastID, phase.name, phase.description, phase.level)
+        }
+        await this.runAsync('COMMIT;')
+        resolve({ id: insert && insert.lastID || -1})
+
+      } catch (e) {
+        if (e.err) reject(e)
+        else {
+          await this.runAsync('ROLLBACK')
+          reject({
+            code: DB_ERRORS.UNKNOWN,
+            err: e.message
+          })
+        }
       }
     })
   }

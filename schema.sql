@@ -112,6 +112,7 @@ CREATE TABLE rating (
 CREATE TABLE program (
   id INTEGER PRIMARY KEY,
   user_id INTEGER,
+  name VARCHAR(32),
   description TEXT,
   level INTEGER,
   created_at DATETIME
@@ -119,6 +120,7 @@ CREATE TABLE program (
 CREATE TABLE program_phase (
   id INTEGER PRIMARY KEY,
   program_id INTEGER,
+  name VARCHAR(32),
   description TEXT,
   level INTEGER
 );
