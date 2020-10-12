@@ -1108,6 +1108,26 @@ class DataBase {
       }
     })
   }
+
+  addParticipant(program_id, user_id ) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const insert = await this.runAsync(
+          `INSERT INTO participants (program_id, user_id, created_at) 
+          VALUES (?, ?, CURRENT_TIMESTAMP)`, program_id, user_id)
+          resolve({ id: insert && insert.lastID || -1})
+  
+        } catch (e) {
+          if (e.err) reject(e)
+          else {
+            reject({
+              code: DB_ERRORS.UNKNOWN,
+              err: e.message
+            })
+          }
+        }
+      })
+  }
 }
 
 module.exports = {
