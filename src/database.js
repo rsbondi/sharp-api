@@ -1088,8 +1088,11 @@ class DataBase {
           const phase = phases[p]
           await this.runAsync(`
             INSERT INTo program_phase (program_id, name, description, level) 
-            VALUES (?, ?, ?, ?)`, insert.lastID, phase.name, phase.description, phase.level)
+            VALUES (?, ?, ?, ?);`, insert.lastID, phase.name, phase.description, phase.level)
         }
+        await this.runAsync(`
+              INSERT INTO participants (program_id, user_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP);
+            `, insert.lastID, user_id)
         await this.runAsync('COMMIT;')
         resolve({ id: insert && insert.lastID || -1})
 

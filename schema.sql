@@ -124,6 +124,13 @@ CREATE TABLE program_phase (
   description TEXT,
   level INTEGER
 );
+CREATE TABLE participants (
+  id INTEGER PRIMARY KEY,
+  program_id INTEGER,
+  user_id INTEGER,
+  created_at DATETIME,
+  UNIQUE (user_id, program_id)
+);
 CREATE INDEX idx_group_users_group_id ON group_users (group_id);
 CREATE INDEX idx_group_users_user_id ON group_users (user_id);
 CREATE INDEX idx_mentor_mentor_id ON mentor (mentor_id);
