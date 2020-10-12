@@ -17,6 +17,12 @@ const REQUEST = {
     TERMINATED: 2
   }
 }
+const RATING = {
+  TYPE: {
+    PROGRAM: 0,
+    MENTOR: 1
+  }
+}
 
 class DataBase {
   constructor() {
@@ -1011,6 +1017,62 @@ class DataBase {
       })
     })
 
+  }
+
+  rate(user_id, item_id, item_type, rating, review) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rows = await this.queryAsync(
+          `SELECT id FROM rating WHERE user_id=? AND item_id=? AND item_type=?`,
+          user_id, item_id, item_type)
+        if (rows.length) {
+          await this.runAsync(`BEGIN TRANSACTION;`)
+          await this.runAsync(`UPDATE rating SET rating=?, review=? WHERE id=?`, rating, review, rows[0].id)
+          await this.runAsync('COMMIT;')      
+          resolve({ id: rows[0].id, action: 'rating' })
+        } else {
+          await this.runAsync(`BEGIN TRANSACTION;`)
+          const sql = `INSERT INTO rating 
+                       (user_id, item_id, item_type, rating, review, created_at) 
+                       VALUES(?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+          const insert = await this.runAsync(sql, user_id, item_id, item_type, rating, review)
+          let target_user_id
+          if (item_type === RATING.TYPE.PROGRAM) {
+            const rows = await this.queryAsync('SELECT user_id FROM program WHERE id=?', item_id)
+            if (rows.length) {
+              await this.runAsync(this.notificationQuery('rating'), insert.lastID, user_id, target_user_id)              
+            } else {
+              await this.runAsync('ROLLBACK')
+              reject({code: DB_ERRORS.SERVER_ERROR, err: 'program not found'})
+              return;
+            }
+          } else {
+            const rows = await this.queryAsync('SELECT mentor_id, protege_id FROM mentor WHERE id=?', item_id)
+            if (rows.length) {
+              if (rows[0].protege_id != user_id) {
+                await this.runAsync('ROLLBACK')
+                reject({code: DB_ERRORS.SERVER_ERROR, err: 'only the protege can rate their mentor'})
+                return;  
+              }
+              await this.runAsync(this.notificationQuery('rating'), insert.lastID, user_id, target_user_id)
+            } else {
+              await this.runAsync('ROLLBACK')
+              reject({code: DB_ERRORS.SERVER_ERROR, err: 'mentor not found'})
+              return;
+            }
+          }
+
+          await this.runAsync('COMMIT;')      
+          resolve({ id: insert.lastID, action: 'rating' })
+        }
+      } catch(e) {
+        await this.runAsync('ROLLBACK')
+        reject({
+          code: DB_ERRORS.UNKNOWN,
+          err: e.message
+        })
+      }
+    })
   }
 }
 

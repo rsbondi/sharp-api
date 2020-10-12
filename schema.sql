@@ -99,6 +99,29 @@ CREATE TABLE likes (
   created_at DATETIME,
   UNIQUE(user_id, item_id, item_type)
 );
+CREATE TABLE rating (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER,
+  item_id INTEGER,
+  item_type INTEGER,
+  rating INTEGER,
+  review TEXT,
+  created_at DATETIME,
+  UNIQUE(user_id, item_id, item_type)
+);
+CREATE TABLE program (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER,
+  description TEXT,
+  level INTEGER,
+  created_at DATETIME
+);
+CREATE TABLE program_phase (
+  id INTEGER PRIMARY KEY,
+  program_id INTEGER,
+  description TEXT,
+  level INTEGER
+);
 CREATE INDEX idx_group_users_group_id ON group_users (group_id);
 CREATE INDEX idx_group_users_user_id ON group_users (user_id);
 CREATE INDEX idx_mentor_mentor_id ON mentor (mentor_id);
@@ -121,4 +144,6 @@ CREATE UNIQUE INDEX request_idx_unique on request(requester_id, requestee_id, re
 CREATE UNIQUE INDEX mentor_protege_id ON mentor(mentor_id, protege_id);
 CREATE UNIQUE INDEX accountability_users ON accountability(user1, user2);
 CREATE INDEX idx_notification_recipient ON notification (recipient_id);
+CREATE INDEX idx_program_phase_program_id ON program_phase (program_id);
+CREATE INDEX idx_program_user_id ON program (user_id);
 COMMIT;
