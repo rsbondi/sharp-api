@@ -349,10 +349,10 @@ class DataBase {
     })
   }
 
-  addUser(username, password_hash) {
+  addUser(username, password_hash, fullname, email) {
     return new Promise((resolve, reject) => {
-      const sql = this.db.prepare("INSERT INTO user (username, password_hash, created_at) VALUES(?, ?, CURRENT_TIMESTAMP)")
-      sql.run(username, password_hash, (err) => {
+      const sql = this.db.prepare("INSERT INTO user (username, password_hash, fullname, email, created_at) VALUES(?, ?, ?, ?, CURRENT_TIMESTAMP)")
+      sql.run(username, password_hash, fullname, email, (err) => {
         if (err) {
           reject(err)
         } else {
