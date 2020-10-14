@@ -2,7 +2,7 @@ const { db } = require('../database')
 
 function participate(req, res) {
   const user_id = res.locals.userId
-  db.getPrograms().then(data => {
+  db.getPrograms(user_id).then(data => {
     res.send(JSON.stringify({
       success: true,
       programs: data
