@@ -1128,6 +1128,48 @@ class DataBase {
         }
       })
   }
+
+  getPrograms() {
+    return new Promise((resolve, reject) => {
+      this.db.all(`
+      SELECT * FROM (
+        SELECT p.id, 0 phase_id, p.name, p.user_id, p.description, p.level, p.created_at,
+        u.username, u.fullname, u.avatar_image, members
+        FROM program p
+        JOIN user u ON p.user_id=u.id
+        JOIN (SELECT program_id, COUNT(user_id) members FROM participants GROUP BY user_id) pa ON pa.program_id=p.id
+        
+        UNION SELECT pp.program_id, pp.id phase_id, pp.name, NULL user_id, pp.description, pp.level, NULL created_at,
+        NULL username, NULL fullname, NULL avatar_image, NULL members
+        FROM program_phase pp
+      )
+      ORDER BY id, phase_id
+      ;
+      `, [], (err, rows) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        const programs = rows.reduce((result, row) => {
+          const { id, name, user_id, description, level, created_at, phase_id, username, fullname, avatar_image } = row
+          result.set(row.id, result.get(row.id) || {   
+            id, name, description, level, user_id, created_at, username, fullname, avatar_image,
+            phases: []
+          })
+          if (row.phase_id) {
+            result.get(row.id).phases.push({
+              id: phase_id, name, description, level
+            })
+          }
+          return result
+        }, new Map())
+        resolve(Array.from(programs.values()))
+      })
+    })
+  }
 }
 
 module.exports = {
