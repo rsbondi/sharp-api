@@ -1136,14 +1136,20 @@ class DataBase {
         SELECT p.id, 0 phase_id, p.name, p.user_id, p.description, p.level, p.created_at,
         u.username, u.fullname, u.avatar_image, members, 
         CASE WHEN p.user_id=? THEN 1 ELSE 0 END creator,
-        CASE WHEN pt.user_id=? THEN 1 ELSE 0 END member
+        CASE WHEN pt.user_id=? THEN 1 ELSE 0 END member,
+        COALESCE(rated, 0) rating, COALESCE(nratings, 0) nratings
         FROM program p
         JOIN user u ON p.user_id=u.id
         JOIN (SELECT program_id, COUNT(user_id) members FROM participants GROUP BY program_id) pa ON pa.program_id=p.id
         LEFT JOIN participants pt ON pt.program_id=p.id AND pt.user_id=?
-        
+        LEFT JOIN (
+          SELECT item_id, AVG(rating) rated, COUNT(rating) nratings 
+          FROM rating
+          WHERE item_type=0 GROUP BY item_id, item_type
+        ) r ON r.item_id=p.id
+
         UNION SELECT pp.program_id, pp.id phase_id, pp.name, NULL user_id, pp.description, pp.level, NULL created_at,
-        NULL username, NULL fullname, NULL avatar_image, NULL members, NULL creator, NULL member
+        NULL username, NULL fullname, NULL avatar_image, NULL members, NULL creator, NULL member, NULL rating, NULL nratings
         FROM program_phase pp
       )
       ORDER BY id, phase_id
@@ -1158,10 +1164,10 @@ class DataBase {
         }
         const programs = rows.reduce((result, row) => {
           const { id, name, user_id, description, level, created_at, phase_id, 
-            username, fullname, avatar_image, members, member, creator } = row
+            username, fullname, avatar_image, members, member, creator, rating, nratings } = row
           result.set(row.id, result.get(row.id) || {   
             id, name, description, level, user_id, created_at, username, 
-            fullname, avatar_image, members, member, creator,
+            fullname, avatar_image, members, member, creator, rating, nratings,
             phases: []
           })
           if (row.phase_id) {
