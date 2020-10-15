@@ -1158,10 +1158,10 @@ class DataBase {
         }
         const programs = rows.reduce((result, row) => {
           const { id, name, user_id, description, level, created_at, phase_id, 
-            username, fullname, avatar_image, member, creator } = row
+            username, fullname, avatar_image, members, member, creator } = row
           result.set(row.id, result.get(row.id) || {   
             id, name, description, level, user_id, created_at, username, 
-            fullname, avatar_image, member, creator,
+            fullname, avatar_image, members, member, creator,
             phases: []
           })
           if (row.phase_id) {
