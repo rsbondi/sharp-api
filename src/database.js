@@ -315,40 +315,6 @@ class DataBase {
     })
   }
 
-  addGroup(name, description, owner) {
-    return new Promise((resolve, reject) => {
-      // TODO: can I do a transaction and capture the insert id ???
-      const sql = this.db.prepare("INSERT INTO user_group (name, description, owner) VALUES(?, ?, ?)")
-      sql.run(name, description, owner, (err) => {
-        if (err) {
-          reject(err)
-        } else {
-          const groupId = sql.lastID
-          this.addGroupUser(groupId, owner).then(() => {
-            resolve({ id: groupId })
-          }).catch(err => {
-            // TODO: or maybe I should just try to remove here
-            reject(err)
-          })
-        }
-      }).finalize()
-    })
-  }
-
-  addGroupUser(group_id, user_id) {
-    return new Promise((resolve, reject) => {
-      const sql = this.db.prepare("INSERT INTO group_users (group_id, user_id, created_at) VALUES(?, ?, CURRENT_TIMESTAMP)")
-      sql.run(group_id, user_id, (err) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve({ id: sql.lastID })
-        }
-      }).finalize()
-
-    })
-  }
-
   addUser(username, password_hash, fullname, email) {
     return new Promise((resolve, reject) => {
       const sql = this.db.prepare("INSERT INTO user (username, password_hash, fullname, email, created_at) VALUES(?, ?, ?, ?, CURRENT_TIMESTAMP)")
@@ -465,71 +431,6 @@ class DataBase {
     })
   }
 
-  getGroupUsers(group_id) {
-    return new Promise((resolve, reject) => {
-      this.db.all(`SELECT
-      g.id,
-      u.id user_id,
-      u.username,
-      u.fullname
-     FROM group_users g
-     JOIN user u ON g.user_id=u.id
-     WHERE g.group_id=?
-     ;`, [group_id], (err, rows) => {
-        if (err) {
-          reject({
-            code: DB_ERRORS.SERVER_ERROR,
-            err: err.message
-          })
-          return console.error(err.message);
-        }
-        if (rows) {
-          resolve({
-            users: rows
-          })
-        } else {
-          reject({
-            code: DB_ERRORS.USER_NOT_FOUND,
-            err: `No user found with id of ${user_id}`
-          })
-        }
-
-      }
-      )
-    })
-  }
-
-  getUsersGroups(user_id) {
-    return new Promise((resolve, reject) => {
-      this.db.all(`SELECT
-      g.name, g.description,
-      CASE WHEN g.owner=? THEN 1 ELSE 0 END mine
-     FROM user_group g
-     JOIN group_users u ON u.group_id=g.id
-     WHERE u.user_id=?
-     ;
-     `, [user_id, user_id], (err, rows) => {
-        if (err) {
-          reject({
-            code: DB_ERRORS.SERVER_ERROR,
-            err: err.message
-          })
-          return console.error(err.message);
-        }
-        if (rows) {
-          resolve({
-            groups: rows
-          })
-        } else {
-          reject({
-            code: DB_ERRORS.USER_NOT_FOUND,
-            err: `No user found with id of ${user_id}`
-          })
-        }
-      });
-    })
-
-  }
 
   getFeed(options) {
     const { user_id, last, program_id, user_posts } = options

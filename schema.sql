@@ -1,15 +1,6 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
-CREATE TABLE user_group (
-  id INTEGER PRIMARY KEY,
-  description TEXT
-, name varchar(64), owner INTEGER);
-CREATE TABLE group_users (
-  id INTEGER PRIMARY KEY,
-  group_id INTEGER,
-  user_id INTEGER,
-  created_at DATETIME
-);
+
 CREATE TABLE mentor (
   id INTEGER PRIMARY KEY,
   mentor_id INTEGER,
@@ -131,8 +122,6 @@ CREATE TABLE participants (
   created_at DATETIME,
   UNIQUE (user_id, program_id)
 );
-CREATE INDEX idx_group_users_group_id ON group_users (group_id);
-CREATE INDEX idx_group_users_user_id ON group_users (user_id);
 CREATE INDEX idx_mentor_mentor_id ON mentor (mentor_id);
 CREATE INDEX idx_mentor_protege_id ON mentor (protege_id);
 CREATE INDEX idx_accountability_user1 ON accountability (user1);
