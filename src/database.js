@@ -1,3 +1,4 @@
+
 const sqlite3 = require('sqlite3').verbose()
 const DB_ERRORS = {
   SERVER_ERROR: 0,
@@ -561,7 +562,7 @@ class DataBase {
       if (user_id) params.push(user_id)
       let ifollowClause = '', ifollowStatement = '', requestClause = '', requestStatement = ''
       if (requester_id) {
-        params.push(requester_id, requester_id)
+        params.push(requester_id, requester_id, requester_id)
         params.unshift(requester_id, requester_id)
         ifollowClause = 'LEFT JOIN  (SELECT * FROM follow) f3 ON f3.followee_id=u.id AND f3.follower_id=?'
         ifollowStatement = 'CASE WHEN f3.id>0 THEN 1 ELSE 0 END ifollow,'
@@ -571,7 +572,7 @@ class DataBase {
         requestClause = `LEFT JOIN request r ON r.requester_id=u.id AND r.requestee_id=?
                          OR r.requestee_id=u.id AND r.requester_id=?`
 
-      }
+      } else params.push(user_id)
       let whereClause = user_id ? ' WHERE u.id=?' : requester_id ? ' WHERE u.id!=?' : ''
       let inClause = ''
       if (in_ids) {
@@ -597,6 +598,7 @@ class DataBase {
       ${ifollowStatement}
       COALESCE(ra.rating, 0) rating,
       COALESCE(ra.nratings, 0) nratings,
+      COALESCE(m.mymentor, 0) mymentor,
       COALESCE(followers, 0) followers,
       COALESCE(following, 0) following
       ${requestStatement}
@@ -621,6 +623,8 @@ class DataBase {
         FROM rating
         WHERE item_type=1 GROUP BY item_id, item_type
       ) ra ON ra.item_id=u.id
+      LEFT JOIN (SELECT COUNT(id) mymentor, mentor_id, protege_id FROM mentor GROUP BY mentor_id, protege_id) m 
+      ON m.mentor_id=u.id AND m.protege_id=?
       ${ifollowClause}
       ${requestClause}
       ${whereClause}
