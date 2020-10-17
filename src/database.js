@@ -956,7 +956,7 @@ class DataBase {
               return;
             }
           } else {
-            const rows = await this.queryAsync('SELECT mentor_id, protege_id FROM mentor WHERE id=?', item_id)
+            const rows = await this.queryAsync('SELECT mentor_id, protege_id FROM mentor WHERE mentor_id=? AND protege_id=?', item_id, user_id)
             if (rows.length) {
               if (rows[0].protege_id != user_id) {
                 await this.runAsync('ROLLBACK')
