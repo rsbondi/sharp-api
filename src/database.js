@@ -595,6 +595,8 @@ class DataBase {
       COALESCE(l.likes_received, 0) likes, 
       COALESCE(pc.posts, 0) posts,
       ${ifollowStatement}
+      COALESCE(ra.rating, 0) rating,
+      COALESCE(ra.nratings, 0) nratings,
       COALESCE(followers, 0) followers,
       COALESCE(following, 0) following
       ${requestStatement}
@@ -614,6 +616,11 @@ class DataBase {
       LEFT JOIN (SELECT GROUP_CONCAT(offer_type) offers, user_id FROM offering GROUP BY user_id) o ON u.id=o.user_id
       LEFT JOIN (SELECT COUNT(id) followers, followee_id FROM follow GROUP BY followee_id) f ON f.followee_id=u.id
       LEFT JOIN  (SELECT COUNT(id) following, follower_id FROM follow GROUP BY follower_id) f2 ON f2.follower_id=u.id
+      LEFT JOIN (
+        SELECT item_id, AVG(rating) rating, COUNT(rating) nratings 
+        FROM rating
+        WHERE item_type=1 GROUP BY item_id, item_type
+      ) ra ON ra.item_id=u.id
       ${ifollowClause}
       ${requestClause}
       ${whereClause}
