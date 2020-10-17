@@ -557,7 +557,7 @@ class DataBase {
   getUserInfo(options) {
     return new Promise((resolve, reject) => {
       options = options || {}
-      const { user_id, requester_id, in_ids, filter } = options
+      const { user_id, requester_id, in_ids, filter, owner_id } = options
       const params = []
       if (user_id) params.push(user_id)
       let ifollowClause = '', ifollowStatement = '', requestClause = '', requestStatement = ''
@@ -572,7 +572,7 @@ class DataBase {
         requestClause = `LEFT JOIN request r ON r.requester_id=u.id AND r.requestee_id=?
                          OR r.requestee_id=u.id AND r.requester_id=?`
 
-      } else params.push(user_id)
+      } else params.unshift(owner_id || user_id)
       let whereClause = user_id ? ' WHERE u.id=?' : requester_id ? ' WHERE u.id!=?' : ''
       let inClause = ''
       if (in_ids) {
