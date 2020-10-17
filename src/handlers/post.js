@@ -1,9 +1,9 @@
 const { db } = require('../database') 
 
 function post(req, res) {
-  const { group_id, content } = req.body
+  const { program_id, content } = req.body
   const user_id = res.locals.userId
-  db.post(user_id, group_id, content).then(data => {
+  db.post(user_id, program_id, content).then(data => {
     res.send(JSON.stringify({
       success: true,
       id: data.id

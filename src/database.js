@@ -301,10 +301,10 @@ class DataBase {
     })
   }
 
-  post(user_id, group_id, content) {
+  post(user_id, program_id, content) {
     return new Promise((resolve, reject) => {
-      const sql = this.db.prepare("INSERT INTO post (group_id, user_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)")
-      sql.run(group_id, user_id, content, (err) => {
+      const sql = this.db.prepare("INSERT INTO post (program_id, user_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)")
+      sql.run(program_id, user_id, content, (err) => {
         if (err) {
           reject(err)
         } else {
@@ -532,12 +532,12 @@ class DataBase {
   }
 
   getFeed(options) {
-    const { user_id, last, group_id, user_posts } = options
+    const { user_id, last, program_id, user_posts } = options
     return new Promise((resolve, reject) => {
       let whereClause, params
-      if (group_id) {
-        whereClause = 'WHERE p.group_id=?'
-        params = [group_id, user_id]
+      if (program_id) {
+        whereClause = 'WHERE p.program_id=?'
+        params = [user_id, program_id]
       } else if (user_posts) {
         whereClause = `WHERE p.user_id=?`
         params = [user_id, user_id]

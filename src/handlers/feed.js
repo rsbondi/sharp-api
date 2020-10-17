@@ -2,8 +2,8 @@ const { db } = require('../database')
 
 function feed(req, res) {
   const user_id = res.locals.userId
-  const { group_id, last } = req.body
-  db.getFeed({ user_id, last, group_id }).then(data => {
+  const { program_id, last } = req.body
+  db.getFeed({ user_id, last, program_id }).then(data => {
     res.send(JSON.stringify({
       success: true,
       id: data.id,

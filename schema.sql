@@ -32,7 +32,7 @@ CREATE TABLE message (
 CREATE TABLE post (
   id INTEGER PRIMARY KEY,
   user_id INTEGER,
-  group_id INTEGER,
+  program_id INTEGER,
   content TEXT,
   created_at DATETIME
 );
@@ -140,7 +140,7 @@ CREATE INDEX idx_accountability_user2 ON accountability (user2);
 CREATE INDEX idx_message_sender_id ON message (sender_id);
 CREATE INDEX idx_message_recipient_id ON message (recipient_id);
 CREATE INDEX idx_post_user_id ON post (user_id);
-CREATE INDEX idx_post_group_id ON post (group_id);
+CREATE INDEX idx_post_program_id ON post (program_id);
 CREATE INDEX idx_comment_user_id ON comment (user_id);
 CREATE INDEX idx_comment_post_id ON comment (post_id);
 CREATE INDEX idx_image_owner_id ON image (owner_id);
