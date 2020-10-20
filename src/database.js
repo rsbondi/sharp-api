@@ -1102,6 +1102,38 @@ class DataBase {
       })
     })
   }
+
+  getReviews(item_id, item_type) {
+    return new Promise((resolve, reject) => {
+      const sql = `
+      SELECT r.rating, r.review, r.created_at,
+      u.fullname, u.username
+      FROM rating r
+      JOIN user u ON u.id=r.user_id
+      WHERE r.item_id=?
+      AND r.item_type=?
+      AND r.review!='';
+      `
+      this.db.get(sql, [item_id, item_type], (err, row) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        if (row) {
+          resolve(row)
+        } else {
+          reject({
+            code: DB_ERRORS.NOT_FOUND,
+            err: `No reviews found for id ${item_id}`
+          })
+        }
+       
+      })
+    })
+  }
 }
 
 module.exports = {
