@@ -598,6 +598,7 @@ class DataBase {
       ${ifollowStatement}
       COALESCE(ra.rating, 0) rating,
       COALESCE(ra.nratings, 0) nratings,
+      COALESCE(reviews, 0) reviews,
       COALESCE(m.mymentor, 0) mymentor,
       COALESCE(followers, 0) followers,
       COALESCE(following, 0) following
@@ -623,6 +624,13 @@ class DataBase {
         FROM rating
         WHERE item_type=1 GROUP BY item_id, item_type
       ) ra ON ra.item_id=u.id
+      LEFT JOIN (
+        SELECT COUNT(review) reviews, item_id
+        FROM rating 
+        WHERE item_type=1
+        GROUP BY item_id
+        HAVING review !=''  
+    ) rb ON rb.item_id=u.id
       LEFT JOIN (SELECT COUNT(id) mymentor, mentor_id, protege_id FROM mentor GROUP BY mentor_id, protege_id) m 
       ON m.mentor_id=u.id AND m.protege_id=?
       ${ifollowClause}
@@ -632,6 +640,7 @@ class DataBase {
       GROUP BY u.id
       ;
       `
+      console.log(sql)
       this.db[dbmethod](sql, params, (err, row) => {
         if (err) {
           reject({
