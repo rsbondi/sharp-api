@@ -4,7 +4,7 @@ function userinfo(req, res) {
   const { user_id } = req.body
   const user = user_id || res.locals.userId
   const params = {user_id: user}
-  if (user !== res.locals.userId) params.owner_id = res.locals.userId
+  if (user !== res.locals.userId) params.client_id = res.locals.userId
   db.getUserInfo(params).then(data => {
     res.send(JSON.stringify({
       success: true,
