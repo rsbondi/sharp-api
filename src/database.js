@@ -640,7 +640,6 @@ class DataBase {
       GROUP BY u.id
       ;
       `
-      console.log(sql)
       this.db[dbmethod](sql, params, (err, row) => {
         if (err) {
           reject({
@@ -1106,7 +1105,7 @@ class DataBase {
   getReviews(item_id, item_type) {
     return new Promise((resolve, reject) => {
       const sql = `
-      SELECT r.rating, r.review, r.created_at,
+      SELECT r.rating, r.review, r.created_at, r.id,
       u.fullname, u.username
       FROM rating r
       JOIN user u ON u.id=r.user_id
@@ -1114,7 +1113,7 @@ class DataBase {
       AND r.item_type=?
       AND r.review!='';
       `
-      this.db.get(sql, [item_id, item_type], (err, row) => {
+      this.db.all(sql, [item_id, item_type], (err, rows) => {
         if (err) {
           reject({
             code: DB_ERRORS.SERVER_ERROR,
@@ -1122,8 +1121,8 @@ class DataBase {
           })
           return console.error(err.message);
         }
-        if (row) {
-          resolve(row)
+        if (rows) {
+          resolve(rows)
         } else {
           reject({
             code: DB_ERRORS.NOT_FOUND,
