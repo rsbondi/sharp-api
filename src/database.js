@@ -808,8 +808,10 @@ class DataBase {
   searchUsers(str, user_id) {
     return new Promise((resolve, reject) => {
       this.db.all(`
-      SELECT id, username, fullname, avatar_image FROM user WHERE fullname COLLATE NOCASE LIKE ? AND id!=?;
-      `, [`%${str}%`, user_id], (err, rows) => {
+      SELECT id, username, fullname, avatar_image 
+      FROM user WHERE 
+      (fullname COLLATE NOCASE LIKE ? OR username like ?) AND id!=?;
+      `, [`%${str}%`, `%${str}%`, user_id], (err, rows) => {
         if (err) {
           reject({
             code: DB_ERRORS.SERVER_ERROR,
