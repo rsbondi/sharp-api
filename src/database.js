@@ -303,16 +303,35 @@ class DataBase {
   }
 
   post(user_id, program_id, content) {
-    return new Promise((resolve, reject) => {
-      const sql = this.db.prepare("INSERT INTO post (program_id, user_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)")
-      sql.run(program_id, user_id, content, (err) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve({ id: sql.lastID })
-        }
-      }).finalize()
+    return new Promise(async (resolve, reject) => {
+      try {
 
+        await this.runAsync(`BEGIN TRANSACTION;`)
+        const sql = "INSERT INTO post (program_id, user_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)"
+        const insert = await this.runAsync(sql, program_id, user_id, content)
+
+        const mentions = content.match(/@[^\s]+/g)
+        if (mentions) {
+          for (var i = 0; i < mentions.length; i++) {
+            const mention = mentions[i]
+            const query = `SELECT id from user WHERE username=?`
+            const result = await this.queryAsync(query, mention.slice(1))
+            if (result.length) {
+              await this.runAsync(this.notificationQuery('mention'), insert.lastID, user_id, result[0].id)
+            }
+          }
+        }
+
+        await this.runAsync('COMMIT;')
+        resolve({ id: insert.lastID })
+
+      } catch(e) {
+        await this.runAsync('ROLLBACK')
+        reject({
+          code: DB_ERRORS.UNKNOWN,
+          err: e.message
+        })
+      }
     })
   }
 
