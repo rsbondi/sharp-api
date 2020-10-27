@@ -738,6 +738,13 @@ class DataBase {
         JOIN comment c ON n.source_id=c.id
         WHERE n.notification_type='comment'
 
+        UNION SELECT n.id, n.user_id, n.notification_type, n.created_at, n.source_id, n.recipient_id, n.seen,
+        u.username, u.fullname, u.avatar_image, p.content
+        FROM notification n
+        JOIN user u ON n.user_id=u.id
+        JOIN post p ON n.source_id=p.id
+        WHERE n.notification_type='mention'
+
         ) x
         
         WHERE recipient_id=?
