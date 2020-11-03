@@ -71,6 +71,7 @@ CREATE TABLE user (
   cover_image VARCHAR(255), 
   fullname VARCHAR(64) NOT NULL,
   email VARCHAR(255), 
+  bio TEXT,
   created_at DATETIME
 );
 CREATE TABLE notification (

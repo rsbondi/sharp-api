@@ -348,6 +348,19 @@ class DataBase {
     })
   }
 
+  updateUser(user_id, fullname, email, bio) {
+    return new Promise((resolve, reject) => {
+      const sql = `UPDATE user SET fullname=?, email=?, bio=? WHERE id=?`
+      this.db.run(sql, fullname, email, bio, user_id, err => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve({ id: user_id})
+        }        
+      })
+    })
+  }
+
   setUserImage(user_id, image, image_type) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -610,7 +623,7 @@ class DataBase {
       }
       const dbmethod = user_id ? 'get' : 'all'
       const sql = `
-      SELECT u.id, u.username, u.fullname, u.avatar_image, u.cover_image, 
+      SELECT u.id, u.username, u.fullname, u.avatar_image, u.cover_image, u.bio,
       COALESCE(offers, '') offerings, 
       COALESCE(l.likes_received, 0) likes, 
       COALESCE(pc.posts, 0) posts,
