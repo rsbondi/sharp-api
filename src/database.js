@@ -302,6 +302,32 @@ class DataBase {
     })
   }
 
+  mentions(content) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const mentions = content.match(/@[^\s]+/g)
+        const returnValue = []
+        if (mentions) {
+          for (var i = 0; i < mentions.length; i++) {
+            const mention = mentions[i]
+            const query = `SELECT id from user WHERE username=?`
+            const result = await this.queryAsync(query, mention.slice(1))
+            if (result.length) {
+              returnValue.push(result[0].id)
+            }
+          }
+        }
+        resolve(returnValue)
+      } catch(e) {
+        await this.runAsync('ROLLBACK')
+        reject({
+          code: DB_ERRORS.UNKNOWN,
+          err: e.message
+        })
+      }
+    })
+  }
+
   post(user_id, program_id, content) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -310,16 +336,9 @@ class DataBase {
         const sql = "INSERT INTO post (program_id, user_id, content, created_at) VALUES(?, ?, ?, CURRENT_TIMESTAMP)"
         const insert = await this.runAsync(sql, program_id, user_id, content)
 
-        const mentions = content.match(/@[^\s]+/g)
-        if (mentions) {
-          for (var i = 0; i < mentions.length; i++) {
-            const mention = mentions[i]
-            const query = `SELECT id from user WHERE username=?`
-            const result = await this.queryAsync(query, mention.slice(1))
-            if (result.length) {
-              await this.runAsync(this.notificationQuery('mention'), insert.lastID, user_id, result[0].id)
-            }
-          }
+        const mentions = await this.mentions(content)
+        for (var i = 0; i < mentions.length; i++) {
+          await this.runAsync(this.notificationQuery('mention'), insert.lastID, user_id, mentions[i])
         }
 
         await this.runAsync('COMMIT;')
@@ -520,7 +539,7 @@ class DataBase {
       GROUP BY p.id, pc.id
       ORDER BY p.created_at DESC, pc.id DESC
     ;
-    ;`, params, (err, rows) => {
+    ;`, params, async (err, rows) => {
         if (err) {
           reject({
             code: DB_ERRORS.SERVER_ERROR,
@@ -529,26 +548,34 @@ class DataBase {
           return console.error(err.message);
         }
         if (rows) {
-          resolve({
-            posts: Array.from(rows.reduce((result, row) => {
-              const { id, content, username, fullname, created_at, likes, comment_likes, avatar_image, ilike, user_id } = row
-              result.set(row.id, result.get(row.id) || {
-                id, content, username, fullname, created_at, likes, avatar_image, ilike, user_id,
-                comments: []
+          const result = new Map
+          for(var p=0; p<rows.length; p++) {
+            const row = rows[p]
+            const { id, content, username, fullname, created_at, likes, comment_likes, avatar_image, ilike, user_id } = row
+            const mentionids = await this.mentions(content)
+            const mentions = []
+            for(var m=0; m<mentionids.length; m++) {
+              const user = await this.getUserInfo({user_id: mentionids[m]})
+              mentions.push(user)
+            }
+            result.set(row.id, result.get(row.id) || {
+              id, content, username, fullname, created_at, likes, avatar_image, ilike, user_id,
+              comments: [], mentions
+            })
+            if (row.comment_id)
+              result.get(row.id).comments.push({
+                id: row.comment_id,
+                username: row.commenter,
+                user_id: row.commenter_id,
+                fullname: row.commenter_name,
+                created_at: row.comment_time,
+                likes: comment_likes,
+                content: row.comment,
+                avatar_image: row.commenter_image
               })
-              if (row.comment_id)
-                result.get(row.id).comments.push({
-                  id: row.comment_id,
-                  username: row.commenter,
-                  user_id: row.commenter_id,
-                  fullname: row.commenter_name,
-                  created_at: row.comment_time,
-                  likes: comment_likes,
-                  content: row.comment,
-                  avatar_image: row.commenter_image
-                })
-              return result
-            }, new Map).values())
+          }
+          resolve({
+            posts: Array.from(result.values())
           })
         } else {
           reject({
