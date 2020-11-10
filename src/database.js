@@ -1008,6 +1008,41 @@ class DataBase {
 
   }
 
+  getRatingStats(item_id, item_type) {
+    return new Promise(async (resolve, reject) => {
+      const sql = `SELECT 
+        COALESCE(rated,0) rating,
+        COALESCE(nratings, 0) nratings,
+        COALESCE(reviews, 0) reviews
+        FROM (
+        (
+            SELECT item_id, AVG(rating) rated, COUNT(rating) nratings 
+            FROM rating
+            WHERE item_type=? AND item_id=? GROUP BY item_id
+        ) r 
+        LEFT JOIN (
+            SELECT COUNT(review) reviews, item_id
+            FROM rating 
+            WHERE item_type=?
+            AND item_id=?
+            GROUP BY item_id
+            HAVING review !=''  
+            ) rb ON rb.item_id=r.item_id
+        ) `
+      this.db.get(sql, [item_type, item_id, item_type, item_id], (err, row) => {
+        if (err) {
+          reject({ code: DB_ERRORS.SERVER_ERROR, err: err})
+          return
+        }  
+        if (!row) {
+          reject({code: DB_ERRORS.NOT_FOUND, err: 'item not found'})
+          return
+        }
+        resolve(row)
+      })
+    })
+  }
+
   rate(user_id, item_id, item_type, rating, review) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -1051,8 +1086,9 @@ class DataBase {
             }
           }
 
-          await this.runAsync('COMMIT;')      
-          resolve({ id: insert.lastID, action: 'rating' })
+          await this.runAsync('COMMIT;')
+          const stats = await this.getRatingStats(item_id, item_type)
+          resolve({ id: insert.lastID, action: 'rating', stats })
         }
       } catch(e) {
         await this.runAsync('ROLLBACK')
