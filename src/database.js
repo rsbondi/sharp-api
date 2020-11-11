@@ -53,8 +53,9 @@ class DataBase {
           const sql = "INSERT INTO follow (follower_id, followee_id, created_at) VALUES(?, ?, CURRENT_TIMESTAMP)"
           const insert = await this.runAsync(sql, follower_id, followee_id)
           await this.runAsync(this.notificationQuery('follow'), insert.lastID, follower_id, followee_id)
-          await this.runAsync('COMMIT;')      
-          resolve({ id: insert.lastID, action: 'follow' })
+          await this.runAsync('COMMIT;')
+          const row = await this.queryAsync(`SELECT COUNT(id) followers FROM follow WHERE followee_id=?`, followee_id)
+          resolve({ id: insert.lastID, action: 'follow', followers: row[0].followers })
         }
       } catch (e) {
         await this.runAsync('ROLLBACK')
@@ -1052,8 +1053,9 @@ class DataBase {
         if (rows.length) {
           await this.runAsync(`BEGIN TRANSACTION;`)
           await this.runAsync(`UPDATE rating SET rating=?, review=? WHERE id=?`, rating, review, rows[0].id)
-          await this.runAsync('COMMIT;')      
-          resolve({ id: rows[0].id, action: 'rating' })
+          await this.runAsync('COMMIT;')
+          let stats = await this.getRatingStats(item_id, item_type)
+          resolve({ id: rows[0].id, action: 'rating', stats })
         } else {
           await this.runAsync(`BEGIN TRANSACTION;`)
           const sql = `INSERT INTO rating 
@@ -1087,7 +1089,7 @@ class DataBase {
           }
 
           await this.runAsync('COMMIT;')
-          const stats = await this.getRatingStats(item_id, item_type)
+          let stats = await this.getRatingStats(item_id, item_type)
           resolve({ id: insert.lastID, action: 'rating', stats })
         }
       } catch(e) {

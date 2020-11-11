@@ -7,7 +7,8 @@ function follow(req, res) {
     res.send(JSON.stringify({
       success: true,
       id: data.id,
-      action: data.action
+      action: data.action,
+      followers: data.followers
     }))
   }).catch(err => {
     res.status(500)
