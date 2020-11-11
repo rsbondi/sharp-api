@@ -2,7 +2,7 @@ const { MacaroonsBuilder, MacaroonsVerifier } = require('macaroons.js')
 const { TimestampCaveatVerifier } = require('macaroons.js').verifier
 
 // TODO: get from env
-const secretKey = new Buffer.from("39a630867921b61522892779c659934667606426402460f913c9171966e97775", 'hex')
+const secretKey = new Buffer.from(process.env.SECRET_KEY, 'hex')
 
 module.exports = function auth(req, res, next) {
   const authHeader = req.headers.authorization

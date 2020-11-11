@@ -30,3 +30,4 @@ cert.pem
 client_id
 key.pem
 api.http
+.env

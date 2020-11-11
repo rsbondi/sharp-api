@@ -2,7 +2,16 @@ const express = require('express')
 const cors = require('cors')
 const https = require('https')
 const fs = require('fs')
-const path = require('path')
+
+const env = fs.readFileSync(__dirname+'/.env', 'utf8').split('\n')
+env.forEach(e => {
+  if (e) {
+    const kv = e.split('=')
+    process.env[kv[0]] = kv[1]
+  }
+
+})
+
 const auth = require('./auth')
 const sanitize = require('./sanitize')
 const imageonly = require('./imageonly')

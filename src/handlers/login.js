@@ -4,7 +4,7 @@ const crypto = require('crypto')
 const TOKEN_EXPIRE_TIME = 365 * 24 * 60 * 60 * 1000
 
 // TODO: get from env
-const secretKey = new Buffer.from("39a630867921b61522892779c659934667606426402460f913c9171966e97775", 'hex')
+const secretKey = new Buffer.from(process.env.SECRET_KEY, 'hex')
 
 function login (req, res) {
   const { username, password } = req.body
