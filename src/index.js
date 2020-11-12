@@ -49,6 +49,7 @@ const participate = require('./handlers/participate')
 const programs = require('./handlers/programs')
 const reviews = require('./handlers/reviews')
 const updateuser = require('./handlers/updateuser')
+const getasset = require('./handlers/getasset')
 const multer  = require('multer')
 const upload = multer({ dest: 'uploads/' })
 
@@ -66,6 +67,7 @@ server.use(sanitize)
 server.post('/login', login)
 server.post('/newuser', newuser)
 server.get('/image/:imageid', getimage)
+server.get('/assets/:imageid', getasset)
 
 // AUTHORIZATION paths
 server.use(auth)
