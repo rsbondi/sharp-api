@@ -9,10 +9,11 @@ function newuser(req, res) {
     console.log('new user created with id: '+ data.id)
     login(req, res)
   }).catch(err => {
-    res.status(500)
+    res.status(200)
     res.send(JSON.stringify({
       success: false,
-      err: err.message
+      err: err.message,
+      code: err.errno
     }))
     return console.error(err.message);
 
