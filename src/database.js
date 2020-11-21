@@ -1249,6 +1249,35 @@ class DataBase {
       })
     })
   }
+
+  search(str, user_id) {
+    return new Promise((resolve, reject) => {
+      const search = `%${str}%`
+      const sql = `SELECT id, username ref, fullname detail, avatar_image img, 'user' type, NULL parent
+        FROM user WHERE 
+        (fullname COLLATE NOCASE LIKE ? OR username like ?) AND id!=?
+        
+        UNION SELECT id, name ref, description detail, null img, 'program' type, NULL parent
+        FROM program
+        WHERE (description COLLATE NOCASE LIKE ? OR name COLLATE NOCASE LIKE ?)
+        
+        UNION SELECT id, name ref, description detail, null img, 'program_phase' type, program_id parent
+        FROM program_phase
+        WHERE (description COLLATE NOCASE LIKE ? OR name COLLATE NOCASE LIKE ?)
+        ;
+      `
+      this.db.all(sql, [search, search, user_id, search, search, search, search], (err, rows) => {
+        if (err) {
+          reject({
+            code: DB_ERRORS.SERVER_ERROR,
+            err: err.message
+          })
+          return console.error(err.message);
+        }
+        resolve(rows)
+      })
+    })
+  }
 }
 
 module.exports = {
