@@ -6,7 +6,7 @@ function comment(req, res) {
   db.comment(user_id, post_id, content).then(data => {
     res.send(JSON.stringify({
       success: true,
-      id: data.id
+      ...data
     }))
   }).catch(err => {
     res.status(500)

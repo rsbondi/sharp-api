@@ -270,8 +270,16 @@ class DataBase {
           reject({code: DB_ERRORS.SERVER_ERROR, err: 'unable to create notification'})
           return;
         }
-        await this.runAsync('COMMIT;')      
-        resolve({ id: insert.lastID })
+        await this.runAsync('COMMIT;')
+        try {
+          const comment = await this.queryAsync(`SELECT * FROM comment WHERE id=${insert.lastID}`)
+          resolve(comment[0])
+        } catch (e) {
+          reject({
+            code: DB_ERRORS.UNKNOWN,
+            err: e.message
+          })
+        }
       } catch(e) {
         await this.runAsync('ROLLBACK')
         reject({
