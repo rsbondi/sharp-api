@@ -263,8 +263,9 @@ class DataBase {
         await this.runAsync(`BEGIN TRANSACTION;`)
         const insert = await this.runAsync(sql, user_id, post_id, content)
         const post = await this.queryAsync('SELECT user_id FROM post WHERE id=?', post_id)
-        if (post.length) {
-          await this.runAsync(this.notificationQuery('comment'), insert.lastID, user_id, post[0].user_id)
+        if (post.length ) {
+          if (post.user_id !== user_id)
+            await this.runAsync(this.notificationQuery('comment'), insert.lastID, user_id, post[0].user_id)
         } else {
           await this.runAsync('ROLLBACK')
           reject({code: DB_ERRORS.SERVER_ERROR, err: 'unable to create notification'})
